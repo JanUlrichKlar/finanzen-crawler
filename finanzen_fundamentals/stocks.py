@@ -2,11 +2,12 @@
 # -*- coding: utf-8 -*-
 
 import re
-
+import datetime
 import numpy as np
 import pandas as pd
 import requests
 from lxml import html
+from bs4 import BeautifulSoup
 
 # Import Modules
 from finanzen_fundamentals.scraper import _make_soup
@@ -20,14 +21,45 @@ def _check_site(soup):
         message_text = message.get_text()
         load_error = "Die gewünschte Seite konnte nicht angezeigt werden"
         if load_error in message_text:
+            #print('Could not find stock corresponding to ticker {}'.format(stock))
+            #print('retry by interpreting {} as some search-text (ISIN, WKN, etc.)'.format(stock.upper()))
+            #stock_name = _get_name_by(stock.upper())
+            #get_fundamentals(stock_name)
             raise ValueError("Could not find Stock")
+
+
+# Define Function to get stockticker by isin, wkn or company name
+def _get_name_by(search_text: str):
+
+    url_search = 'https://www.finanzen.net/suggest/finde/json?'
+    payload = {
+        'max_results': '1',
+        'Keywords_mode': 'APPROX',
+        'Keywords': search_text,
+        'query': search_text,
+        'bias': '100',
+        'target_id': '0'}
+    r = requests.get(url_search, params=payload)
+
+    soup = BeautifulSoup(r.content, 'lxml')
+
+    page = soup.find('p').getText()
+    # Find stock name
+    matching_name = [s for s in page.split(',') if "metadata" in s]
+    # Find isin
+    matching_isin = [s for s in page.split(',') if "identifiers" in s]
+
+    return matching_name[0].split(':')[1].split('|')[0][1:], matching_isin[0].split(':')[1].split('|')[1]
 
 
 # Define Function to Extract GuV/Bilanz from finanzen.net
 def get_fundamentals(stock: str):
+    # Find ticker also if it is a ISIN or WKN
+    stock = _get_name_by(stock)
+    #print(stock)
     # Convert name to lowercase
     stock = stock.lower()
-
+    print(stock)
     # Load Data
     soup = _make_soup("https://www.finanzen.net/bilanz_guv/" + stock)
 
@@ -393,3 +425,74 @@ def search_stock_lxml(stock: str, limit: int = -1, results=[]):
                 df = df.append(pd.DataFrame(data=[[raw_name, fn_stock_name, raw_isin, raw_wkn]], columns=indices))
 
     return df
+
+
+def get_historic(stock: str, start_date, end_date, exchange='home', forced='yes'):
+    # Find ticker also if it is a ISIN or WKN
+    if forced != 'no':
+        stock, isin_nr = _get_name_by(stock)
+    print(isin_nr)
+    # Convert name to lowercase
+    stock = stock.lower()
+    print(stock)
+    # First request to get Info about stock (home-exchange, currency, etc.)
+    url_base = "https://www.finanzen.net/aktien/" + stock + '-aktie'
+    r = requests.post(url_base)
+    soup = BeautifulSoup(r.content, 'lxml')
+    table = soup.find_all('div', {'class': 'menuDown color-blue pointer'})
+    # non-german stocks at their home-exchange and domestic currency
+    # for non german stocks 2 tables (1. german exchange /2. domestic exchange)
+    for tab in table:
+        home_exchange = tab.text
+    if isin_nr[0:2] == 'DE' and exchange == 'home':
+        home_exchange = 'FSE'
+    currency = soup.find_all('div', class_='row quotebox')[0].find('div').find('span').text
+    print(currency)
+    # Request to get historical stock data
+    url_base = "https://www.finanzen.net/historische-kurse/" + stock
+    # get date from imput (accept datetime and string input)
+
+    if isinstance(start_date, str):
+        start_date = datetime.datetime.strptime(start_date, '%d/%m/%Y')
+    inTag1, inMonat1, inJahr1 = start_date.day, start_date.month, start_date.year
+    if isinstance(end_date, str):
+        end_date = datetime.datetime.strptime(end_date, '%d/%m/%Y')
+    inTag2, inMonat2, inJahr2 = end_date.day, end_date.month, end_date.year
+
+    form_data = {'inTag1': inTag1, 'inMonat1': inMonat1, 'inJahr1': inJahr1,
+                 'inTag2': inTag2, 'inMonat2': inMonat2, 'inJahr2': inJahr2,
+                 'strBoerse': home_exchange}
+    r = requests.post(url_base, data=form_data)
+    soup = BeautifulSoup(r.content, 'lxml')
+    table = soup.find_all('table')[3]
+    #print(table)
+
+
+    output_rows = []
+    for table_row in table.findAll('tr'):
+        columns = table_row.findAll('td')
+        output_row = []
+        for column in columns:
+            output_row.append(column.text)
+        output_rows.append(output_row)
+    output_rows = [x for x in output_rows if x != []]
+
+    historic_data = pd.DataFrame(np.array(output_rows),
+                    columns=['date', 'open', 'close', 'high', 'low', 'volume'])
+
+    historic_data['date'] = pd.to_datetime(historic_data['date'], format='%d.%m.%Y')
+    for price in ['open', 'close', 'high', 'low']:
+        historic_data[price] = historic_data[price].str.replace('-', '0')
+        historic_data[price] = historic_data[price].str.replace(',', '.').astype(float)
+    historic_data['volume'] = historic_data['volume'].str.replace('-', '0')
+    historic_data['volume'] = historic_data['volume'].str.replace('.', '').astype(float)
+    print(historic_data['volume'])
+    
+    #action = soup.find('form', action='/historische-kurse/' + stock).get('action')
+    #historic_form = soup.find('form', action='/historische-kurse/' + stock)
+    #
+    #print(historic_form.prettify())
+    #post_url = get_post_url(host, action)
+    # Check for Error
+    #_check_site(soup)
+
