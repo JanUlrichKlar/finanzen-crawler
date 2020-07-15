@@ -44,12 +44,19 @@ def _get_name_by(search_text: str):
     soup = BeautifulSoup(r.content, 'lxml')
 
     page = soup.find('p').getText()
+    print(page)
     # Find stock name
-    matching_name = [s for s in page.split(',') if "metadata" in s]
+    matching_name = [s for s in page.split(',') if "name" in s]
+    stock_name = matching_name[0].split(':')[1]
+    # Find stock ticker
+    matching_ticker = [s for s in page.split(',') if "metadata" in s]
+    stock_ticker = matching_ticker[0].split(':')[1].split('|')[0][1:]
+    #print(matching_name)
     # Find isin
     matching_isin = [s for s in page.split(',') if "identifiers" in s]
+    stock_isin = matching_isin[0].split(':')[1].split('|')[1]
 
-    return matching_name[0].split(':')[1].split('|')[0][1:], matching_isin[0].split(':')[1].split('|')[1]
+    return stock_name, stock_ticker, stock_isin
 
 
 # Define Function to Extract GuV/Bilanz from finanzen.net
