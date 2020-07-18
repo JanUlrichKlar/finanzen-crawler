@@ -21,10 +21,10 @@ def _check_site(soup):
         message_text = message.get_text()
         load_error = "Die gewünschte Seite konnte nicht angezeigt werden"
         if load_error in message_text:
-            #print('Could not find stock corresponding to ticker {}'.format(stock))
-            #print('retry by interpreting {} as some search-text (ISIN, WKN, etc.)'.format(stock.upper()))
-            #stock_name = _get_name_by(stock.upper())
-            #get_fundamentals(stock_name)
+            # print('Could not find stock corresponding to ticker {}'.format(stock))
+            # print('retry by interpreting {} as some search-text (ISIN, WKN, etc.)'.format(stock.upper()))
+            # stock_name = _get_name_by(stock.upper())
+            # get_fundamentals(stock_name)
             raise ValueError("Could not find Stock")
 
 
@@ -72,7 +72,7 @@ def identify_security(search_text: str):
             exchanges[index, 1] = re.search('>(.*)<', str(opt)).group(1)
             print('{}  {} {}'.format(index, exchanges[index, 0], exchanges[index, 1]))
 
-        #print(exchanges)
+        # print(exchanges)
         hexchange_ind = int(input("Which exchange should be the home-exchange?"))
         sec_home_exchange = exchanges[hexchange_ind, 0]
         sec_list = sec_list.append(
@@ -98,6 +98,7 @@ def get_fundamentals(stock: str):
     soup = _make_soup("https://www.finanzen.net/bilanz_guv/" + stock)
     # Check for Error
     _check_site(soup)
+
     # Define Function to Parse Table
     def _parse_table(soup, signaler: str):
         table_dict = {}
@@ -459,17 +460,17 @@ def search_stock_lxml(stock: str, limit: int = -1, results=[]):
     return df
 
 
-def get_historic(stock: str, start_date, end_date, exchange='home', forced='yes'):
-    # load security list to check wether security was already searched before
+def get_historic(stock: str, start_date, end_date, exchange='home'):
+    # load security list to check whether security was already searched before
 
     name, ticker, isin_nr, home_exchange = identify_security(stock)
-    print(isin_nr)
+    # set exchange to home which is in the csv from an earlier search or was identified right now
     if exchange == 'home':
         exchange = home_exchange
 
     # Request to get historical stock data
     url_base = "https://www.finanzen.net/historische-kurse/" + ticker
-    # get date from imput (accept datetime and string input)
+    # get date from input (accept datetime and string input)
 
     if isinstance(start_date, str):
         start_date = datetime.datetime.strptime(start_date, '%d/%m/%Y')
@@ -483,8 +484,10 @@ def get_historic(stock: str, start_date, end_date, exchange='home', forced='yes'
                  'strBoerse': exchange}
     r = requests.post(url_base, data=form_data)
     soup = BeautifulSoup(r.content, 'lxml')
+    # identify currency which depends on chosen exchange
+    currency = soup.find('div', class_="col-xs-5 col-sm-4 text-sm-right text-nowrap").find('span').text
+    # extract historic data from table |
     table = soup.find_all('table')[3]
-
     output_rows = []
     for table_row in table.findAll('tr'):
         columns = table_row.findAll('td')
@@ -495,16 +498,17 @@ def get_historic(stock: str, start_date, end_date, exchange='home', forced='yes'
     output_rows = [x for x in output_rows if x != []]
 
     historic_data = pd.DataFrame(np.array(output_rows),
-    columns=['date', 'open', 'close', 'high', 'low', 'volume'])
+                                 columns=['date', 'open', 'close', 'high', 'low', 'volume'])
 
     historic_data['date'] = pd.to_datetime(historic_data['date'], format='%d.%m.%Y')
+    # as in german comma separates decimal places the data must be corrected
+    # also sometimes no value exists so it is set to 0
     for price in ['open', 'close', 'high', 'low']:
         historic_data[price] = historic_data[price].str.replace('-', '0')
         historic_data[price] = historic_data[price].str.replace(',', '.').astype(float)
     historic_data['volume'] = historic_data['volume'].str.replace('-', '0')
     historic_data['volume'] = historic_data['volume'].str.replace('.', '').astype(float)
+    # add column with currency for specific exchange
+    historic_data['currency'] = currency
 
     return historic_data
-    
-
-
