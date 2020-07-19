@@ -31,7 +31,7 @@ def _check_site(soup):
 # Define Function to identify security by isin or something else
 def identify_security(search_text: str):
     # load security list to check wether security was already searched before
-    sec_list = pd.read_csv('../finanzen_fundamentals/security_info.csv', keep_default_na=False)
+    sec_list = pd.read_csv('security_info.csv', keep_default_na=False)
     mask = np.column_stack([sec_list[col].str.contains(search_text, na=False) for col in sec_list])
     sec_index = sec_list.loc[mask.any(axis=1)]
     if sec_index.empty:
@@ -78,7 +78,7 @@ def identify_security(search_text: str):
         sec_list = sec_list.append(
             {'name': sec_name, 'ticker': sec_ticker, 'isin': sec_isin, 'exchange': sec_home_exchange},
             ignore_index=True)
-        sec_list.to_csv('../finanzen_fundamentals/security_info.csv', index=False)
+        sec_list.to_csv('security_info.csv', index=False)
     else:
         sec_name = sec_index['name'].iloc[0]
         sec_ticker = sec_index['ticker'].iloc[0]
