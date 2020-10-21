@@ -10,7 +10,7 @@ from lxml import html
 from bs4 import BeautifulSoup
 
 # Import Modules
-from finanzen_fundamentals.scraper import _make_soup
+from finanzenpy.scraper import _make_soup
 from . import statics
 
 
@@ -31,7 +31,7 @@ def _check_site(soup):
 # Define Function to identify security by isin or something else
 def identify_security(search_text: str):
     # load security list to check wether security was already searched before
-    sec_list = pd.read_csv('../finanzen_fundamentals/security_info.csv', keep_default_na=False)
+    sec_list = pd.read_csv('/security_info.csv', keep_default_na=False)
     mask = np.column_stack([sec_list[col].str.contains(search_text, na=False) for col in sec_list])
     sec_index = sec_list.loc[mask.any(axis=1)]
     if sec_index.empty:

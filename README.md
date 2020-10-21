@@ -1,5 +1,9 @@
-# Finanzen-Fundamentals
-Finanzen-Fundamentals is a Python package that can be used to retrieve fundamentals of stocks. The data is fetched from [finanzen.net](https://www.finanzen.net), a German language financial news site. Note that the api is English but all data will be returned in German.
+# finanzenpy
+finanzenpy is based the a Python package Finanzen-Fundamentals that can be used to retrieve fundamentals of stocks, but 
+was extended to retrieve historical stock prices. The stock identifier can be ISIN, WKN or the name of the stock itself. 
+As the ISIN and WKN are unique it  is recommended to use one of them. 
+The data is fetched from [finanzen.net](https://www.finanzen.net), a German language financial news site. Note that the 
+api is English but all data will be returned in German.
 
 # Installation
 You can easily install finanzen-fundamentals via pip: `pip install finanzen-fundamentals`
