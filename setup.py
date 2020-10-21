@@ -4,11 +4,11 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="finanzen-fundamentals", # Replace with your own username
+    name="finanzenpy", # Replace with your own username
     version="0.0.21",
-    author="Joshua Hruzik",
-    author_email="joshua.hruzik@gmail.com",
-    description="API to fetch stock data fundamentals from finanzen.net",
+    author="Jan-Ulrich Klar",
+    author_email="jan.klar@gmx.net",
+    description="API to fetch historical stock data  and fundamentals from finanzen.net",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/Jhruzik/Finanzen-Fundamentals",
