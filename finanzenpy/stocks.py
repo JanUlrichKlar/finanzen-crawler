@@ -8,6 +8,10 @@ import pandas as pd
 import requests
 from lxml import html
 from bs4 import BeautifulSoup
+import os
+
+dirname = os.path.dirname(__file__)
+#print(dirname)
 
 # Import Modules
 from finanzenpy.scraper import _make_soup
@@ -31,7 +35,7 @@ def _check_site(soup):
 # Define Function to identify security by isin or something else
 def identify_security(search_text: str):
     # load security list to check wether security was already searched before
-    sec_list = pd.read_csv('/security_info.csv', keep_default_na=False)
+    sec_list = pd.read_csv(dirname + '/data/security_info.csv', keep_default_na=False)
     mask = np.column_stack([sec_list[col].str.contains(search_text, na=False) for col in sec_list])
     sec_index = sec_list.loc[mask.any(axis=1)]
     if sec_index.empty:
@@ -78,7 +82,7 @@ def identify_security(search_text: str):
         sec_list = sec_list.append(
             {'name': sec_name, 'ticker': sec_ticker, 'isin': sec_isin, 'exchange': sec_home_exchange},
             ignore_index=True)
-        sec_list.to_csv('security_info.csv', index=False)
+        sec_list.to_csv(dirname + '/data/security_info.csv', index=False)
     else:
         sec_name = sec_index['name'].iloc[0]
         sec_ticker = sec_index['ticker'].iloc[0]
@@ -491,7 +495,9 @@ def get_historic(stock: str, start_date, end_date, exchange='home'):
     # identify currency which depends on chosen exchange
     currency = soup.find('div', class_="col-xs-5 col-sm-4 text-sm-right text-nowrap").find('span').text
     # extract historic data from table |
-    table = soup.find_all('table')[3]
+    table = soup.find_all('table')[4]
+    #print(table)
+    # make output table
     output_rows = []
     for table_row in table.findAll('tr'):
         columns = table_row.findAll('td')
