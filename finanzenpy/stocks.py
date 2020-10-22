@@ -67,7 +67,7 @@ def identify_security(search_text: str):
         url_base = "https://www.finanzen.net/historische-kurse/" + sec_ticker
         r = requests.get(url_base)
         soup = BeautifulSoup(r.content, 'lxml')
-        table = soup.find_all('table')[2]
+        table = soup.find_all('table')[3]
         options = table.find_all('option')
 
         exchanges = np.zeros((len(options), 2), dtype=object)
