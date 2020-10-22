@@ -6,7 +6,9 @@ The data is fetched from [finanzen.net](https://www.finanzen.net), a German lang
 api is English but all data will be returned in German.
 
 # Installation
-You can easily install finanzen-fundamentals via pip: `pip install finanzen-fundamentals`
+You can clone it to your local machine and use pip install . in the package directory.
+Pip installation is added in the near future.
+<!--- You can easily install finanzenpy via pip: `pip install finanzen-fundamentals` -->
 
 If you choose to download the source code, make sure that you have the following dependencies installed:
 * requests
@@ -18,7 +20,7 @@ You can install all of them by running: `pip install requests BeautifulSoup lxml
 ## Import
 After you successfully installed the package, you can include it in your projects by importing it.
 
-```import finanzen_fundamentals```
+```import finanzenpy```
 
 ## Retrieve Fundamentals
 You can retrieve the fundamentals of a single stock by running: 
@@ -103,4 +105,4 @@ Security unknown -- Starting search on finanzen.net
 19  XQTX Quotrix
 Which exchange should be the home-exchange?
 ```
-The full name, the specific finanzen.net name the ISIN and the favorite exchange will be saved in \finanzen_fundamentals\security_info.csv
+The full name, the specific finanzen.net name the ISIN and the favorite exchange will be saved in \finanzenpy\data\security_info.csv
